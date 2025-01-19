@@ -23,10 +23,10 @@
 ;; This is a package for excludes buffers starting with *, blank, +,
 ;;
 ;; [ja]
-;; *¡¢¶õÇò¡¢+¤Ê¤É¤Ç¤Ï¤¸¤Ş¤ë¥Ğ¥Ã¥Õ¥¡¤òÂĞ¾İ³°¤È¤·¤¿switch-to-prev-buffer/switch-to-next-buffer¤ò
-;; ¤¹¤ë¤¿¤á¤Îpackage¤Ç¤¹¡£
-;; kill-buffer¤ÎÂå¤ï¤ê¤Ëfoeb/kill-buffer¤ò»È¤¦¤³¤È¤Ç¡¢
-;; kill-buffer¤Î¤¢¤È¤ËÊÔ½¸¤Ç¤­¤Ê¤¤½ñÎà¤Ëswitch¤·¤Ê¤¯¤Ê¤ê¤Ş¤¹¡£
+;; *ã€ç©ºç™½ã€+ãªã©ã§ã¯ã˜ã¾ã‚‹ãƒãƒƒãƒ•ã‚¡ã‚’å¯¾è±¡å¤–ã¨ã—ãŸswitch-to-prev-buffer/switch-to-next-bufferã‚’
+;; ã™ã‚‹ãŸã‚ã®packageã§ã™ã€‚
+;; kill-bufferã®ä»£ã‚ã‚Šã«foeb/kill-bufferã‚’ä½¿ã†ã“ã¨ã§ã€
+;; kill-bufferã®ã‚ã¨ã«ç·¨é›†ã§ããªã„æ›¸é¡ã«switchã—ãªããªã‚Šã¾ã™ã€‚
 ;;
 ;;; Usage:
 ;; (require 'focus-on-editable-buffers)
@@ -162,12 +162,25 @@ IS-NEXT is Non-nil switch to next buffer."
 BUFFER-OR-NAME is compatible."
   (if BUFFER-OR-NAME
       (kill-buffer BUFFER-OR-NAME)
-    (kill-buffer))
+    (custom-kill-buffer-ask))
   (let ((non-ignore-command-when-kill-buffer foeb/non-ignore-command-when-kill-buffer)
         (non-ignore-mode-when-kill-buffer foeb/non-ignore-mode-when-kill-buffer))
     (unless (or (string-match non-ignore-command-when-kill-buffer (format "%s" this-command))
                 (string-match non-ignore-mode-when-kill-buffer (format "%s" major-mode)))
       (foeb/switch-to-non-ignore-buffer))))
+
+;; custom-kill-buffer-ask
+
+(defun custom-kill-buffer-ask ()
+  "Ask if the user wants to close the current buffer if it is modified.
+If yes, clear the modified flag and kill the buffer."
+  (interactive)
+  (if (and (buffer-modified-p)
+           (not (y-or-n-p "Buffer modified; kill anyway? ")))
+      (message "Buffer not killed.")
+    (progn
+      (set-buffer-modified-p nil) ; Do not ask (yes/no/save and then kill)
+      (kill-buffer (current-buffer)))))
 
 ;;; ------------------------------------------------------------
 ;;; advice
