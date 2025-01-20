@@ -175,12 +175,14 @@ BUFFER-OR-NAME is compatible."
   "Ask if the user wants to close the current buffer if it is modified.
 If yes, clear the modified flag and kill the buffer."
   (interactive)
-  (if (and (buffer-modified-p)
-           (not (y-or-n-p "Buffer modified; kill anyway? ")))
-      (message "Buffer not killed.")
-    (progn
-      (set-buffer-modified-p nil) ; Do not ask (yes/no/save and then kill)
-      (kill-buffer (current-buffer)))))
+  (if (derived-mode-p 'dired-mode)
+      (kill-buffer (current-buffer))
+    (if (and (buffer-modified-p)
+             (not (y-or-n-p "Buffer modified; kill anyway? ")))
+        (message "Buffer not killed.")
+      (progn
+        (set-buffer-modified-p nil) ; Do not ask (yes/no/save and then kill)
+        (kill-buffer (current-buffer))))))
 
 ;;; ------------------------------------------------------------
 ;;; advice
