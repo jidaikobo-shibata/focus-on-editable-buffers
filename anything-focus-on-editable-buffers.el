@@ -1,9 +1,9 @@
-;;; anything-focus-on-editable-buffers.el --- use `focus-on-editable-buffers' at `anything'.
+;;; anything-focus-on-editable-buffers.el --- Use focus-on-editable-buffers with Anything. -*- lexical-binding: t; -*-
 ;; maintainer: jidaikobo-shibata
 ;; supervise: rubikitch
 ;; keywords: buffer switch switch-to-prev-buffer switch-to-next-buffer kill-buffer anything
 ;; version: 0.1
-;; for emacs 25.1.1
+;; tested on Emacs 30.2
 ;; Dependencies: `focus-on-editable-buffers.el'
 
 ;; this program is free software; you can redistribute it and/or modify
@@ -32,14 +32,23 @@
 ;;; ------------------------------------------------------------
 ;;; defvar
 
-(require 'anything)
+(declare-function anything "anything")
+(declare-function anything-c-switch-to-buffer "anything")
+(declare-function anything-c-buffers-persistent-kill "anything")
+(declare-function anything-execute-persistent-action "anything")
+(defvar anything-buffer)
+
+(defconst foeb/anything-available-p
+  (require 'anything nil t)
+  "Non-nil when Anything is available.")
 
 (defvar foeb/is-use-anything-execute-persistent-action nil)
 
 ;;; ------------------------------------------------------------
 ;;; auto follow mode
 
-(unless (boundp 'anything-use-follow-mode)
+(unless (or (not foeb/anything-available-p)
+            (boundp 'anything-use-follow-mode))
   (defvar anything-use-follow-mode nil)
   (defun anything-after-initialize-hook--use-follow-mode ()
     "anything-after-initialize-hook--use-follow-mode."
@@ -69,6 +78,8 @@
 (defun foeb/anything-for-buffers ()
   "Anything command for files and commands."
   (interactive)
+  (unless foeb/anything-available-p
+    (user-error "Anything is not available"))
   (if foeb/is-use-anything-execute-persistent-action
       (anything :sources '(foeb/anything-c-source-buffers
                            foeb/anything-c-source-dired-buffers)
@@ -82,6 +93,8 @@
 (defun foeb/anything-execute-persistent-kill ()
   "Execute additional persistent kill action."
   (interactive)
+  (unless foeb/anything-available-p
+    (user-error "Anything is not available"))
   (anything-execute-persistent-action 'persistent-action-2))
 
 ;;; ------------------------------------------------------------

@@ -1,9 +1,9 @@
-;;; focus-on-editable-buffers.el --- Focus on Editable Buffers at `switch-to-buffer' and `kill-buffer'.
+;;; focus-on-editable-buffers.el --- Focus on editable buffers. -*- lexical-binding: t; -*-
 ;; Maintainer: jidaikobo-shibata
 ;; Supervise: rubikitch
 ;; Keywords: buffer switch switch-to-prev-buffer switch-to-next-buffer kill-buffer
-;; Version: 0.1
-;; for Emacs 25.1.1
+;; Version: 0.2
+;; tested on Emacs 30.2
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -116,8 +116,8 @@ IS-NEXT is Non-nil switch to next buffer."
       (unless (with-current-buffer buffer
                 (foeb/ignore-buffer-name-p (buffer-name buffer)))
         (when by-name (setq buffer (buffer-name buffer)))
-        (add-to-list 'ret buffer t)))
-    (if ret ret '("*scratch*"))))
+        (push buffer ret)))
+    (if ret (nreverse ret) '("*scratch*"))))
 
 (defun foeb/ignore-buffer-name-p (buffer)
   "If ignore buffer given return t.  BUFFER is buffer name."
@@ -143,8 +143,8 @@ IS-NEXT is Non-nil switch to next buffer."
       (when (with-current-buffer buffer
               (string-match "\\(?:dired-mode\\)" (format "%s" major-mode)))
         (when by-name (setq buffer (buffer-name buffer)))
-        (add-to-list 'ret buffer t)))
-    ret))
+        (push buffer ret)))
+    (nreverse ret)))
 
 ;;; ------------------------------------------------------------
 ;;; switch to non ignore buffer.  to the first item of buffer list.
@@ -175,7 +175,9 @@ BUFFER-OR-NAME is compatible."
   "Ask if the user wants to close the current buffer if it is modified.
 If yes, clear the modified flag and kill the buffer."
   (interactive)
-  (if (derived-mode-p 'dired-mode)
+  (if (or (and (string-match foeb/ignore-buffers (buffer-name))
+               (not (string= (buffer-name) "*scratch*")))
+          (derived-mode-p 'dired-mode))
       (kill-buffer (current-buffer))
     (if (and (buffer-modified-p)
              (not (y-or-n-p "Buffer modified; kill anyway? ")))
@@ -187,10 +189,12 @@ If yes, clear the modified flag and kill the buffer."
 ;;; ------------------------------------------------------------
 ;;; advice
 
+(defun foeb/delete-window--dont-switch-to-ignores (&rest _args)
+  "After delete-window, do not switch to ignore buffer."
+  (foeb/switch-to-non-ignore-buffer))
+
 (when foeb/is-use-advice-delete-window
-  (defadvice delete-window (after delete-window-dont-switch-to-ignores activate)
-    "After delete window, do not switch to ignore buffer."
-    (foeb/switch-to-non-ignore-buffer)))
+  (advice-add 'delete-window :after #'foeb/delete-window--dont-switch-to-ignores))
 
 ;;; ------------------------------------------------------------
 ;;; Provide
